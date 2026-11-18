@@ -33,6 +33,9 @@ Docs/                        Architecture, milestone reports
 
 ## Opening in Unity (first time)
 
+**Easiest:** close Unity, then double-click `SetupUnity.cmd` in the repository folder. It sets up the
+Unity project, runs the tests and opens the board. Details in `Docs/UnitySetup.md`.
+
 The repo has no Unity-generated files yet. Follow **`Docs/UnitySetup.md`** (Unity 6.3 LTS,
 Universal 2D template). Note that the template's `Assets/Settings` URP assets must be copied along
 with `Packages/` and `ProjectSettings/`.

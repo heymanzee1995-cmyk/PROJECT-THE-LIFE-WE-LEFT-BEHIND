@@ -7,6 +7,25 @@ Nothing here has been done for you: the repository contains no Unity-generated f
 
 ---
 
+## Quick setup (recommended): `SetupUnity.cmd`
+
+1. Close every Unity window.
+2. In the repository folder, double-click **`SetupUnity.cmd`** (or run it from a Command Prompt).
+3. It checks that Unity is closed and finds your Unity 6 editor (6000.3 LTS preferred). It then:
+   - offers to **move** (never delete) stray Unity projects found inside the repository;
+   - creates the Universal 2D project files with Unity's own command line;
+   - imports everything, builds the merge board scene and runs the EditMode and PlayMode tests;
+   - opens Unity on the board.
+4. Set the Game view to a portrait size (for example 1080×2400) and press **Play**.
+
+It commits nothing. If it stops, it says why; send a screenshot. Options:
+
+- `SetupUnity.cmd -TemplateProject "C:\path\to\a\Universal 2D project"`: use a project you made in Hub,
+  if the script can't create one itself.
+- `SetupUnity.cmd -UnityExe "C:\...\Unity.exe"`: choose the editor yourself.
+
+The manual steps below do the same thing by hand.
+
 ## 0. Before you start
 
 - Close any other Unity Editor that has this repository open.
