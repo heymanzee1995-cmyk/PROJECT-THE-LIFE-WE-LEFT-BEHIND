@@ -1,6 +1,7 @@
 # Approved gameplay changes: implementation plan
 
-Approved on 2026-11-18. **Status of all three: NOT STARTED.** The M1 code still implements the old
+Approved on 2026-11-18; open points resolved the same day (see the end of this file).
+**Status of all changes: NOT STARTED.** The M1 code still implements the old
 rules (swap, full refill, board-only delivery), unchanged, so the 78 tests verified in Unity match
 the code you'll verify.
 
@@ -31,8 +32,8 @@ view is then never built against rules that are about to change.
 - Like every refusal it leaves state unchanged: no position change, no items created or destroyed,
   no ledger records, no events. Energy is not touched (drops never cost energy).
 - `DropOutcome.Swapped` is removed. Drops onto empty cells (move) and valid merges are unchanged.
-- Inventory to board onto an occupied cell already refuses (`TargetOccupied`); presentation treats
-  it as a bounce too.
+- Inventory to board onto an occupied cell refuses with `TargetOccupied` (already the engine's
+  behaviour). It is **never a merge**. See resolution 3 below for the approved feedback.
 
 ### Presentation (M2)
 
@@ -104,9 +105,7 @@ Each keeps its scenario and gets the new expected outcome. The test count does n
 - **Merged and rewarded generators** start full with the timer stopped (unchanged).
 - **Snapshot:** `ItemRecord.GeneratorReadyAtMs` becomes `GeneratorRechargeStartMs`. Validation:
   `0 <= charges <= max`; `start == 0` exactly when `charges == max`; `start >= 0`.
-  - Version: no save files exist yet (the save system is M4), so I propose the format stays at
-    **version 1**. M4 then defines the first persisted format and the migration chain from it.
-    **This needs your OK.** The alternative is bumping to version 2 now, with a 1→2 migration and test.
+  - Version: **stays at version 1** (approved), with the save-format conditions in resolution 1 below.
 
 ### Existing tests that encode the old rule (rewritten in M2, not deleted)
 
@@ -154,9 +153,8 @@ Each keeps its scenario and gets the new expected outcome. The test count does n
 - Order requirements (type × count) come from data.
 - **Eligibility and delivery use the same rule:** an order is "ready" only if board plus inventory
   can satisfy it, and delivery uses exactly that rule.
-- **Auto-selection when the player taps Deliver, a proposal that needs your OK:** pick the
-  lowest-index board cells first, then the lowest inventory slots. This is deterministic and keeps
-  the board tidy. The alternative is to prefer inventory items first (it clears storage).
+- **Auto-selection (approved):** eligible **board** items first, lowest cell index first; then
+  eligible **inventory** items, lowest slot first. See resolution 2 below.
 - If the requirements can't be met at the moment of delivery (for example, an item was sold in
   between), nothing is removed and the order stays open.
 - Generators are only deliverable if an order explicitly requires them. Otherwise they are never
@@ -181,10 +179,65 @@ Each keeps its scenario and gets the new expected outcome. The test count does n
 
 ---
 
-## Open points needing your answer (none block the Unity verification)
+## Resolutions (approved 2026-11-18)
 
-1. Snapshot format: keep version 1 for the recharge change, since no save files exist before M4?
-   *(proposed: yes)*
-2. Delivery auto-selection order: board first, or inventory first? *(proposed: board first)*
-3. Inventory to board onto a matching item: merge directly from the inventory, or keep refusing
-   (bounce)? *(proposed: keep refusing for now; revisit after device testing)*
+### Resolution 1: save format stays at version 1, with conditions
+
+- The version is **explicitly stored** in every save. `EngineSnapshot.Version` is already serialized.
+- The loader **validates** it. `TryFromSnapshot` already rejects any version other than the current one.
+- **A missing version must never be read as the current version.** Today `EngineSnapshot.Version`
+  has the field initializer `= CurrentVersion`. A serializer that constructs the object and then
+  finds no `Version` in the file would silently read version 1. **Required fix (save-system work,
+  not done yet):** the save loader reads the version field from the raw file first and treats
+  "absent" as a corrupt save. A test feeds a save with the version removed and expects a rejection.
+  The field default should also become 0 (invalid), so the engine-level check catches it too.
+- **Before any save file is written to a player's device:** version migrations (a chain of
+  `vN → vN+1` steps, each with its own test), backup recovery (temp-file write then rename, one
+  backup kept, fall back to it on a failed load) and corrupted-save handling (truncated, malformed
+  or invalid content is rejected with a reason, never a crash).
+- No save files exist yet. Snapshots are only in memory, so there is no risk until the save system
+  is built.
+
+### Resolution 2: delivery picks board items first, then inventory
+
+- **Selection order:** eligible board items (lowest cell index first), then eligible inventory items
+  (lowest slot first). Deterministic, so the same state always selects the same items.
+- **Engine shape (M3):**
+  - **`PlanDelivery(requirements)`** is a read-only query that returns either the exact item IDs
+    that would be consumed (with their locations) or "cannot fulfil" with what's missing. It changes
+    nothing.
+  - **`TryDeliver(ids)`** removes exactly those IDs, all or nothing. The order system calls it with
+    the planned IDs only after the player confirms.
+- **Preview before confirming (M3 UI):** the order panel shows which items will be consumed,
+  highlighting the board cells and inventory slots, before the Deliver confirmation.
+- **Atomic:** if anything changed between preview and confirmation (an item sold, merged or moved),
+  `TryDeliver` refuses, **nothing is removed**, and the UI re-plans and shows the new preview.
+- **New tests (M3):**
+  - Board-first priority, including a mix of board and inventory.
+  - Inventory is used only for the shortfall.
+  - Deterministic choice among equal items.
+  - "Cannot fulfil" removes nothing.
+  - A stale plan (state changed after planning) is refused with nothing removed.
+  - Board and inventory counts stay consistent; one `Delivery` ledger record per item.
+
+### Resolution 3: inventory item dropped onto a board item is rejected
+
+- **No direct merge from the inventory** (for now). Dropping an inventory item onto any occupied
+  board cell, even an identical mergeable item, is refused with `TargetOccupied`.
+- Effects: the item **returns to its original inventory slot**; board unchanged; inventory unchanged;
+  no energy consumed; no ledger record; no events. The engine already behaves this way today.
+- **M2 presentation:** return animation to the slot plus the same subtle invalid-action feedback as
+  Decision 1.
+- **New tests (M2):** an inventory item onto an identical mergeable board item, onto a different
+  item, and onto a generator. Each is refused, the snapshot is identical and no ledger records or
+  events occur. Energy is checked once it exists (M3). The existing
+  `MoveFromInventory_RefusesOccupiedLockedAndStale` already covers the snapshot part for one case.
+- Revisit direct inventory merging after the core board interactions have been validated on a device.
+
+## Summary of what changes where
+
+| Area | M2 (after Unity verification and plan approval) | M3 | Save-system work (before saves ship) |
+|---|---|---|---|
+| Engine | Bounce-back refusal; incremental recharge; inventory-drop tests | `PlanDelivery`, inventory delivery | Raw-file version check, version default 0, migrations, backup, corruption handling |
+| UI | Bounce and invalid feedback; charge countdown | Delivery preview and confirm | — |
+| Tests | Rewrite 3 swap tests, 8 cooldown tests and the simulation parts; add new ones | Rewrite 2 delivery tests and the simulation part; add new ones | Migration test per step; missing-version; corrupt and backup recovery |

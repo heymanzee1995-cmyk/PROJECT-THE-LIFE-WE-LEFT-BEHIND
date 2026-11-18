@@ -131,11 +131,19 @@ must fail to compile, which proves the engine-reference guard works. Remove the 
 
 **In the Editor:** Window > General > **Test Runner** > **EditMode** tab > **Run All**.
 
-Expected result:
+Expected result (this is the acceptance gate for M2):
 
-- **78 tests passed, 0 failed.**
-- `ReplaySeed` is marked Explicit and is **not** run by Run All. That is intended.
+- **79 tests listed: 78 passed, 0 failed, 1 not run.**
+- The one not run is `SimulationTests.ReplaySeed`. It is marked `[Explicit]` (a manual replay
+  helper), so Run All skips it on purpose. Depending on the Test Runner version it shows as
+  "not run", "skipped" or "ignored". Any of these is correct. Any other skipped test is not expected:
+  report it.
+- The `RandomActions_PreserveAllInvariants` entry expands into 8 seed cases (they count towards the 78).
+- The Console shows **no compile errors**.
 - The simulation tests take the longest (roughly 5–20 s in total). The Editor is busy until they finish.
+
+Please send me: your exact Unity version, the pass/fail/skip counts, and any Console warnings that
+mention `Game.Domain`.
 
 **From the command line** (useful later, and what I'll use for verification once I have access).
 Close the Editor first, then run in PowerShell from the repository root:
