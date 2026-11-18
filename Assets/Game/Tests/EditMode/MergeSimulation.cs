@@ -738,7 +738,7 @@ namespace Game.Domain.Tests
 
         private SimulationFailure Failure(string message) =>
             new SimulationFailure("Merge simulation FAILED. seed=" + _seed + " step=" + _step +
-                                  "\nReplay: MergeSimulation.Run(" + _seed + "UL, " + (_step + 1) + ")\n" + message +
+                                  "\nReplay: SimulationTests.RunOn(\"" + _config.Board.Columns + "x" + _config.Board.Rows + "\", " + _seed + "UL, " + (_step + 1) + ")\n" + message +
                                   "\nLast actions:\n  " + string.Join("\n  ", _history));
     }
 }

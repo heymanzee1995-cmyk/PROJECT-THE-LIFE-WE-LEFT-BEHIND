@@ -143,7 +143,7 @@ namespace Game.Domain.Tests
             e.ItemRemoved += (a, b) => anyEvent = true;
 
             Assert.AreEqual(ActionError.InvalidCell, e.TryDrop(-1, id, 11).Error);
-            Assert.AreEqual(ActionError.InvalidCell, e.TryDrop(10, id, 63).Error);
+            Assert.AreEqual(ActionError.InvalidCell, e.TryDrop(10, id, e.CellCount).Error);
             Assert.AreEqual(ActionError.SameLocation, e.TryDrop(10, id, 10).Error);
             Assert.AreEqual(ActionError.CellLocked, e.TryDrop(10, id, locked[0]).Error);
             Assert.AreEqual(ActionError.SourceEmpty, e.TryDrop(12, id, 11).Error);
@@ -158,10 +158,10 @@ namespace Game.Domain.Tests
         [Test]
         public void Hint_FindsAvailableMerge_AndIgnoresMaxTier()
         {
-            MergeEngine e = EngineWith(out _, At(Cup, 6, 1), At(Cup, 6, 2), At(Flower, 3, 5), At(Cup, 2, 7), At(Flower, 3, 40));
+            MergeEngine e = EngineWith(out _, At(Cup, 6, 1), At(Cup, 6, 2), At(Flower, 3, 5), At(Cup, 2, 7), At(Flower, 3, 30));
             Assert.IsTrue(e.TryFindMerge(out MergeHint hint));
             Assert.AreEqual(5, hint.CellA);
-            Assert.AreEqual(40, hint.CellB);
+            Assert.AreEqual(30, hint.CellB);
 
             MergeEngine none = EngineWith(out _, At(Cup, 6, 1), At(Cup, 6, 2), At(Flower, 3, 5));
             Assert.IsFalse(none.TryFindMerge(out _));

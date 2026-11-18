@@ -14,9 +14,9 @@ namespace Game.Domain.Tests
             SpawnResult r = e.TryTapGenerator(GeneratorCell, gen.Id, 1000);
 
             Assert.AreEqual(ActionError.None, r.Error);
-            // Nearest cells to 31 (col 3,row 4) at distance 1 are 24, 30, 32, 38: lowest index wins.
-            Assert.AreEqual(24, r.Cell);
-            Assert.AreEqual(r.Item, e.GetCell(24).Id);
+            // Nearest cells to 17 (col 2,row 3) at distance 1 are 12, 16, 18, 22: lowest index wins.
+            Assert.AreEqual(12, r.Cell);
+            Assert.AreEqual(r.Item, e.GetCell(12).Id);
             Assert.AreEqual(ToolboxCharges - 1, gen.GeneratorCharges);
             Assert.AreEqual(0, gen.GeneratorReadyAtMs);
             Assert.That(InvariantChecker.Check(e, ledger, true), Is.Empty);
@@ -66,7 +66,7 @@ namespace Game.Domain.Tests
         public void FullBoard_RefusesSpawn_WithoutSpendingChargeOrRng_AndHasResolution()
         {
             var layout = new List<InitialPlacement> { At(Toolbox, 1, GeneratorCell) };
-            for (int cell = 0; cell < 56; cell++)
+            for (int cell = 0; cell < LockedCells[0]; cell++)
             {
                 if (cell != GeneratorCell)
                 {

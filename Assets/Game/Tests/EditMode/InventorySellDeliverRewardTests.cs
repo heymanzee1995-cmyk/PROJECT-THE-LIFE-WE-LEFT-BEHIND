@@ -133,7 +133,7 @@ namespace Game.Domain.Tests
         public void Rewards_QueueWhenBoardFull_AndAreNeverLost()
         {
             var layout = new List<InitialPlacement>();
-            for (int cell = 0; cell < 56; cell++)
+            for (int cell = 0; cell < LockedCells[0]; cell++)
             {
                 layout.Add(At(cell % 2 == 0 ? Cup : Flower, 6, cell));
             }

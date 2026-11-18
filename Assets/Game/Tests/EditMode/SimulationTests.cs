@@ -10,13 +10,30 @@ namespace Game.Domain.Tests
     {
         private const int Steps = 10000;
 
-        private static readonly ulong[] Seeds = { 1UL, 2UL, 3UL, 1337UL, 20261118UL, 0xDEADBEEFUL, 987654321UL, 42UL };
-
-        [Test, TestCaseSource(nameof(Seeds))]
-        public void RandomActions_PreserveAllInvariants(ulong seed)
+        /// <summary>Five seeds on the default 5x8 board, three on the alternative 7x9 board.</summary>
+        private static readonly object[] Cases =
         {
-            SimulationStats stats = MergeSimulation.Run(seed, Steps);
-            TestContext.WriteLine("seed " + seed + ": " + stats);
+            new object[] { 1UL, "5x8" },
+            new object[] { 2UL, "5x8" },
+            new object[] { 3UL, "5x8" },
+            new object[] { 1337UL, "5x8" },
+            new object[] { 20261118UL, "5x8" },
+            new object[] { 0xDEADBEEFUL, "7x9" },
+            new object[] { 987654321UL, "7x9" },
+            new object[] { 42UL, "7x9" },
+        };
+
+        internal static SimulationStats RunOn(string board, ulong seed, int steps)
+        {
+            BoardShape shape = board == "7x9" ? BoardShape.Alt7x9 : BoardShape.Default5x8;
+            return MergeSimulation.Run(seed, steps, TestConfigs.Default(shape: shape), TestConfigs.DefaultLayout(shape));
+        }
+
+        [Test, TestCaseSource(nameof(Cases))]
+        public void RandomActions_PreserveAllInvariants(ulong seed, string board)
+        {
+            SimulationStats stats = RunOn(board, seed, Steps);
+            TestContext.WriteLine("seed " + seed + " on " + board + ": " + stats);
 
             // Guard against a simulation that "passes" by doing nothing interesting.
             Assert.That(stats.Merges, Is.GreaterThan(300), "too few merges exercised");
@@ -53,7 +70,7 @@ namespace Game.Domain.Tests
         [Test, Explicit("Manual replay of a failing simulation seed.")]
         public void ReplaySeed()
         {
-            MergeSimulation.Run(1UL, Steps);
+            RunOn("5x8", 1UL, Steps);
         }
     }
 }

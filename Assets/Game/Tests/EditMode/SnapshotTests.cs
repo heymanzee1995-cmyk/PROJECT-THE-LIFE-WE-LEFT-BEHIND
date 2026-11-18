@@ -15,7 +15,7 @@ namespace Game.Domain.Tests
                 e.TryTapGenerator(GeneratorCell, gen.Id, 1000);
             }
 
-            e.TryMoveToInventory(24, e.GetCell(24).Id);
+            e.TryMoveToInventory(12, e.GetCell(12).Id); // first spawned item
             e.TryUnlockCell(LockedCells[0]);
             e.EnqueueReward(T(Cup, 2));
             return e;
@@ -61,7 +61,7 @@ namespace Game.Domain.Tests
         public void CorruptSnapshots_AreRejectedWithClearErrors()
         {
             AssertRejected(s => s.Version = 99, "version");
-            AssertRejected(s => s.Columns = 8, "config is 7x9");
+            AssertRejected(s => s.Columns = 8, "config is 5x8");
             AssertRejected(s => s.LockedCells = new bool[3], "locked-cell table");
             AssertRejected(s => s.InventoryCapacity = 50, "inventory capacity");
             AssertRejected(s => s.Items[1].Id = s.Items[0].Id, "duplicate ID");

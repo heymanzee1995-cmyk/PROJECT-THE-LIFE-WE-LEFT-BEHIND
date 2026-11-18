@@ -9,16 +9,32 @@ namespace Game.Domain.Tests
     /// Deterministic edge cases around a completely full board, the reward queue, inventory
     /// exhaustion, recovery, drags and save/load. Every refused command is checked to leave the state
     /// unchanged: identical snapshot, no ledger records and no events.
+    /// Every case runs on the default 5x8 board and on the alternative 7x9 board.
     /// </summary>
+    [TestFixture("5x8")]
+    [TestFixture("7x9")]
     public class EdgeCaseTests
     {
-        private const int FullCells = Columns * Rows; // 63: no locked cells in these tests
+        private readonly BoardShape _shape;
+
+        public EdgeCaseTests(string board)
+        {
+            _shape = board == "7x9" ? BoardShape.Alt7x9 : BoardShape.Default5x8;
+        }
+
+        // These shadow the default-board constants from TestConfigs with this fixture's board.
+        private int FullCells => _shape.CellCount;
+        private int GeneratorCell => _shape.GeneratorCell;
+        private int[] LockedCells => _shape.LockedCells;
+
+        private MergeEngine ShapedEngine(out Ledger ledger, params InitialPlacement[] layout) =>
+            NewEngine(out ledger, 12345, layout, Default(shape: _shape));
 
         /// <summary>
-        /// All 63 cells filled and no merge available: a generator at the centre and alternating
-        /// max-tier cups / flowers everywhere else.
+        /// Every cell filled (no locked cells) and no merge available: a generator at the centre and
+        /// alternating max-tier cups / flowers everywhere else.
         /// </summary>
-        private static MergeEngine FullBoard(out Ledger ledger, int inventoryCapacity = 2, int maxInventoryCapacity = 3)
+        private MergeEngine FullBoard(out Ledger ledger, int inventoryCapacity = 2, int maxInventoryCapacity = 3)
         {
             var layout = new List<InitialPlacement> { At(Toolbox, 1, GeneratorCell) };
             for (int cell = 0; cell < FullCells; cell++)
@@ -29,7 +45,7 @@ namespace Game.Domain.Tests
                 }
             }
 
-            EngineConfig config = Default(inventoryCapacity, maxInventoryCapacity, lockedCells: new int[0]);
+            EngineConfig config = Default(inventoryCapacity, maxInventoryCapacity, lockedCells: new int[0], shape: _shape);
             return NewEngine(out ledger, 2026, layout, config);
         }
 
@@ -232,18 +248,18 @@ namespace Game.Domain.Tests
         public void E05_SellingOnFullBoard_FreesExactlyThatCell()
         {
             MergeEngine e = FullBoard(out Ledger ledger);
-            Item victim = e.GetCell(17);
+            Item victim = e.GetCell(9);
             ItemId victimId = victim.Id;
             int expectedValue = Default().GetSellValue(victim.Type);
             var removed = new List<RemovalReason>();
             e.ItemRemoved += (item, reason) => removed.Add(reason);
 
-            ItemResult r = e.TrySell(Location.Cell(17), victimId);
+            ItemResult r = e.TrySell(Location.Cell(9), victimId);
 
             Assert.AreEqual(ActionError.None, r.Error);
             Assert.AreEqual(expectedValue, r.Value);
             Assert.AreEqual(1, e.CountEmptyCells());
-            Assert.IsNull(e.GetCell(17));
+            Assert.IsNull(e.GetCell(9));
             Assert.IsFalse(e.TryGetItem(victimId, out _));
             CollectionAssert.AreEqual(new[] { RemovalReason.Sell }, removed);
             LedgerEntry last = ledger.Entries[ledger.Entries.Count - 1];
@@ -252,7 +268,7 @@ namespace Game.Domain.Tests
             Assert.AreEqual(victimId, last.Item);
 
             // Selling the same item again (double tap / stale UI) is refused.
-            AssertRefused(e, ledger, ActionError.SourceEmpty, () => e.TrySell(Location.Cell(17), victimId).Error);
+            AssertRefused(e, ledger, ActionError.SourceEmpty, () => e.TrySell(Location.Cell(9), victimId).Error);
             AssertHealthy(e, ledger);
         }
 
@@ -265,12 +281,13 @@ namespace Game.Domain.Tests
             Item gen = e.GetCell(GeneratorCell);
             AssertRefused(e, ledger, ActionError.BoardFull, () => e.TryTapGenerator(GeneratorCell, gen.Id, 0).Error);
 
-            e.TrySell(Location.Cell(62), e.GetCell(62).Id); // far corner: the only empty cell
+            int corner = FullCells - 1;
+            e.TrySell(Location.Cell(corner), e.GetCell(corner).Id); // far corner: the only empty cell
             long nextId = e.NextItemId;
             SpawnResult r = e.TryTapGenerator(GeneratorCell, gen.Id, 0);
 
             Assert.AreEqual(ActionError.None, r.Error);
-            Assert.AreEqual(62, r.Cell, "spawn must use the only free cell, however far");
+            Assert.AreEqual(corner, r.Cell, "spawn must use the only free cell, however far");
             Assert.AreEqual(nextId, r.Item.Value);
             Assert.AreEqual(ToolboxCharges - 1, gen.GeneratorCharges);
             Assert.IsTrue(e.IsBoardFull);
@@ -324,7 +341,7 @@ namespace Game.Domain.Tests
         [Test]
         public void E07b_DropOntoLockedCell_AndFromEmptyCell_AreRefusedUnchanged()
         {
-            MergeEngine e = EngineWith(out Ledger ledger, At(Cup, 1, 10));
+            MergeEngine e = ShapedEngine(out Ledger ledger, At(Cup, 1, 10));
             ItemId id = e.GetCell(10).Id;
             AssertRefused(e, ledger, ActionError.CellLocked, () => e.TryDrop(10, id, LockedCells[0]).Error);
             AssertRefused(e, ledger, ActionError.CellLocked, () => e.TryDrop(LockedCells[1], id, 10).Error);
@@ -358,7 +375,7 @@ namespace Game.Domain.Tests
         [Test]
         public void E07d_DragTokenGoesStaleAfterItemIsMergedOrMoved()
         {
-            MergeEngine e = EngineWith(out Ledger ledger, At(Flower, 1, 10), At(Flower, 1, 11), At(Cup, 1, 20));
+            MergeEngine e = ShapedEngine(out Ledger ledger, At(Flower, 1, 10), At(Flower, 1, 11), At(Cup, 1, 20));
             ItemId held = e.GetCell(10).Id;
             ItemId cup = e.GetCell(20).Id;
 
@@ -400,8 +417,8 @@ namespace Game.Domain.Tests
             AssertHealthy(loaded, ledger);
 
             // Both engines continue identically after the same recovery action.
-            e.TrySell(Location.Cell(40), e.GetCell(40).Id);
-            loaded.TrySell(Location.Cell(40), loaded.GetCell(40).Id);
+            e.TrySell(Location.Cell(23), e.GetCell(23).Id);
+            loaded.TrySell(Location.Cell(23), loaded.GetCell(23).Id);
             SpawnResult ra = e.TryTapGenerator(GeneratorCell, gen.Id, 700);
             SpawnResult rb = loaded.TryTapGenerator(GeneratorCell, gen2.Id, 700);
             Assert.AreEqual(ra.Item, rb.Item);
