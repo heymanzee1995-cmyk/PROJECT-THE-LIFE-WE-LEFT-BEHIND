@@ -10,11 +10,11 @@ layouts, names or storylines.
 
 | Phase | Branch | Status |
 |---|---|---|
-| Merge engine (pure C#) | `feature/phase-2-merge-engine` | TESTED (automated) outside Unity; provisionally accepted; Unity EditMode run pending |
-| UI prototype / board view | `feature/phase-1-ui-prototype` | NOT STARTED |
+| Phase 2 / M1: merge engine (pure C#) | `feature/phase-2-merge-engine` | TESTED (automated) outside Unity; provisionally accepted |
+| Phase 2 / M2: Unity integration and playable 5×8 board | `feature/phase-2-merge-engine` | Logic TESTED (automated); Unity board IMPLEMENTED (untested). Waiting on the Unity project and your Editor/device checks (`Docs/MilestoneReports/M2-playable-board.md`) |
 
-Approved gameplay changes (bounce-back drops, incremental recharge, inventory delivery) are planned
-in `Docs/ApprovedChanges.md` and not yet implemented.
+Approved gameplay changes: bounce-back drops and incremental recharge are implemented (M2).
+Delivery from inventory is planned for M3. See `Docs/ApprovedChanges.md`.
 
 Visual direction, title, characters, the default **5×8** board (7×9 kept as a test alternative) and
 excluded elements are recorded in `Docs/VisionReference.md`.

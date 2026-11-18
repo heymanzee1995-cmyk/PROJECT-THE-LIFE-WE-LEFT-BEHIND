@@ -1,7 +1,15 @@
 # Approved gameplay changes: implementation plan
 
 Approved on 2026-11-18; open points resolved the same day (see the end of this file).
-**Status of all changes: NOT STARTED.** The M1 code still implements the old
+**Status (M2):**
+- Decision 1 (bounce back): engine TESTED (automated); Unity feedback IMPLEMENTED (untested).
+- Decision 2 (incremental recharge): engine TESTED (automated); countdown IMPLEMENTED (untested).
+- Resolution 3 (stored item onto a board item is rejected): TESTED (automated).
+- Decision 3 and resolution 2 (delivery from board and inventory, board first): NOT STARTED (M3).
+- Resolution 1 (save-format conditions): NOT STARTED (save system).
+
+Implementation note for Decision 2: whether the timer is running is decided by `charges < max`,
+not by a zero start time. A timer that starts at time 0 is therefore valid. The M1 code still implements the old
 rules (swap, full refill, board-only delivery), unchanged, so the tests verified in Unity (95 since the 5×8 default board) match
 the code you'll verify.
 

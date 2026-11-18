@@ -6,8 +6,8 @@ Three gameplay rules in the M1 engine were my assumptions, not specified rules. 
 
 | Rule in M1 code | Approved replacement | Implemented in | Status |
 |---|---|---|---|
-| Non-matching drop swaps | Return the item with a bounce-back and "invalid merge" feedback; no state change | M2 | NOT STARTED |
-| Refill all charges at once when empty | Incremental: one charge per configurable interval, timer stops at full | M2 | NOT STARTED |
+| Non-matching drop swaps | Return the item with a bounce-back and "invalid merge" feedback; no state change | M2 | Engine: TESTED (automated). Unity feedback: IMPLEMENTED (untested) |
+| Refill all charges at once when empty | Incremental: one charge per configurable interval, timer stops at full | M2 | Engine: TESTED (automated). Countdown display: IMPLEMENTED (untested) |
 | Delivery from board only | Delivery from board and inventory, atomic, ledger-recorded | M3 | NOT STARTED |
 
 The implementation plan, the affected tests and the open points are in **`ApprovedChanges.md`**. The
