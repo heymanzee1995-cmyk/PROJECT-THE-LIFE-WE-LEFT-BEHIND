@@ -2,7 +2,7 @@
 
 Approved on 2026-11-18; open points resolved the same day (see the end of this file).
 **Status of all changes: NOT STARTED.** The M1 code still implements the old
-rules (swap, full refill, board-only delivery), unchanged, so the 78 tests verified in Unity match
+rules (swap, full refill, board-only delivery), unchanged, so the tests verified in Unity (95 since the 5×8 default board) match
 the code you'll verify.
 
 Gate: none of this starts until the Unity project is committed and all 78 EditMode tests pass in

@@ -133,12 +133,15 @@ must fail to compile, which proves the engine-reference guard works. Remove the 
 
 Expected result (this is the acceptance gate for M2):
 
-- **79 tests listed: 78 passed, 0 failed, 1 not run.**
+- **96 tests listed: 95 passed, 0 failed, 1 not run.**
 - The one not run is `SimulationTests.ReplaySeed`. It is marked `[Explicit]` (a manual replay
   helper), so Run All skips it on purpose. Depending on the Test Runner version it shows as
   "not run", "skipped" or "ignored". Any of these is correct. Any other skipped test is not expected:
   report it.
-- The `RandomActions_PreserveAllInvariants` entry expands into 8 seed cases (they count towards the 78).
+- The `RandomActions_PreserveAllInvariants` entry expands into 8 seed cases (5 on the default 5×8
+  board, 3 on the 7×9 alternative). `EdgeCaseTests` appears twice, as `EdgeCaseTests("5x8")` and
+  `EdgeCaseTests("7x9")`, with 17 tests each. All of these count towards the 95.
+- History: the count was 78 until the approved 5×8 default added the second edge-case board.
 - The Console shows **no compile errors**.
 - The simulation tests take the longest (roughly 5–20 s in total). The Editor is busy until they finish.
 
@@ -194,7 +197,7 @@ git add Assets Packages ProjectSettings
 ```
 
 ```bash
-git commit -m "Add Unity 6.3 LTS Universal 2D project files and .meta files (Unity 6000.3.Nf1). Domain EditMode tests: 78 passed in Unity."
+git commit -m "Add Unity 6.3 LTS Universal 2D project files and .meta files (Unity 6000.3.Nf1). Domain EditMode tests: 95 passed, 1 explicit not run, in Unity."
 ```
 
 ```bash

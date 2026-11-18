@@ -16,6 +16,9 @@ layouts, names or storylines.
 Approved gameplay changes (bounce-back drops, incremental recharge, inventory delivery) are planned
 in `Docs/ApprovedChanges.md` and not yet implemented.
 
+Visual direction, title, characters, the default **5×8** board (7×9 kept as a test alternative) and
+excluded elements are recorded in `Docs/VisionReference.md`.
+
 The engine was built before the UI prototype (agreed order), so the UI shows real rules and not
 throwaway logic. See `Docs/MilestoneReports/` for each milestone's report.
 
