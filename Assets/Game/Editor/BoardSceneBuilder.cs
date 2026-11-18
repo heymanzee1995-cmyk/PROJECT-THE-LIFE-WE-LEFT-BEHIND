@@ -11,12 +11,34 @@ namespace Game.Editor
     /// <summary>
     /// Builds the M2 merge board scene inside Unity, so no scene or material files are hand-written.
     /// Menu: Tools > The Life We Left Behind > Create Merge Board Scene.
+    /// Batch mode (used by SetupUnity.cmd): -executeMethod Game.Editor.BoardSceneBuilder.CreateSceneBatch
     /// </summary>
+    [InitializeOnLoad]
     public static class BoardSceneBuilder
     {
         public const string ScenePath = "Assets/Game/Scenes/MergeBoard.unity";
         public const string MaterialPath = "Assets/Game/Presentation/Placeholder/SpriteUnlit.mat";
+        /// <summary>Written by the setup script: open the board scene once when the Editor next starts.</summary>
+        public const string OpenOnceFlag = "Library/Game.OpenMergeBoard.flag";
         private const string UnlitShader = "Universal Render Pipeline/2D/Sprite-Unlit-Default";
+
+        static BoardSceneBuilder()
+        {
+            if (Application.isBatchMode || !File.Exists(OpenOnceFlag))
+            {
+                return;
+            }
+
+            EditorApplication.delayCall += () =>
+            {
+                File.Delete(OpenOnceFlag);
+                if (File.Exists(ScenePath) && !EditorApplication.isPlayingOrWillChangePlaymode)
+                {
+                    EditorSceneManager.OpenScene(ScenePath, OpenSceneMode.Single);
+                    Debug.Log("[Board] Opened " + ScenePath + ". Set the Game view to a portrait size and press Play.");
+                }
+            };
+        }
 
         [MenuItem("Tools/The Life We Left Behind/Create Merge Board Scene")]
         public static void CreateScene()
@@ -26,6 +48,30 @@ namespace Game.Editor
                 return;
             }
 
+            Build();
+        }
+
+        /// <summary>Entry point for batch mode: builds the scene without dialogs and exits non-zero on failure.</summary>
+        public static void CreateSceneBatch()
+        {
+            try
+            {
+                Build();
+                if (!File.Exists(ScenePath))
+                {
+                    Debug.LogError("[Board] Scene was not saved to " + ScenePath);
+                    EditorApplication.Exit(2);
+                }
+            }
+            catch (System.Exception e)
+            {
+                Debug.LogError("[Board] Creating the scene failed: " + e);
+                EditorApplication.Exit(3);
+            }
+        }
+
+        private static void Build()
+        {
             Material material = GetOrCreateUnlitMaterial();
             Scene scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
 
