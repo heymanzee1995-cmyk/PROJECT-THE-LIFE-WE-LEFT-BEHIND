@@ -74,6 +74,8 @@ namespace Game.Domain.Tests
             AssertRejected(s => s.Items[0].Area = 7, "invalid area");
             AssertRejected(s => FindInventory(s).Index = 40, "outside capacity");
             AssertRejected(s => FindGenerator(s).GeneratorCharges = 99, "generator state");
+            AssertRejected(s => FindGenerator(s).GeneratorRechargeStartMs = -1, "generator state");
+            AssertRejected(s => { FindGenerator(s).GeneratorCharges = 6; FindGenerator(s).GeneratorRechargeStartMs = 123; }, "generator state");
             AssertRejected(s => FindNonGenerator(s).GeneratorCharges = 1, "non-generator");
             AssertRejected(s => s.PendingRewards[0].ChainId = "ghost", "Pending reward");
             AssertRejected(s => s.Items = null, "missing");

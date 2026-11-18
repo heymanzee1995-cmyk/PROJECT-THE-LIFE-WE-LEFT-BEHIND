@@ -22,8 +22,11 @@ namespace Game.Domain
         /// <summary>Stored charges (generators only). Use <see cref="MergeEngine.GetAvailableCharges"/> for the time-adjusted value.</summary>
         public int GeneratorCharges { get; internal set; }
 
-        /// <summary>Absolute time (ms) at which a depleted generator refills; 0 when not cooling down.</summary>
-        public long GeneratorReadyAtMs { get; internal set; }
+        /// <summary>
+        /// When the charge currently recharging started (ms). Meaningful only while stored charges are below
+        /// max (the timer runs exactly then); 0 when full.
+        /// </summary>
+        public long GeneratorRechargeStartMs { get; internal set; }
 
         public override string ToString() => Id + "(" + Type + ")@" + Location;
     }

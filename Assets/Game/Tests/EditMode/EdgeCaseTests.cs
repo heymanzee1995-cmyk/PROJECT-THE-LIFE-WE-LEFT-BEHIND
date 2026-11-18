@@ -130,7 +130,7 @@ namespace Game.Domain.Tests
             }
 
             Assert.AreEqual(ToolboxCharges, gen.GeneratorCharges, "no charge spent");
-            Assert.AreEqual(0, gen.GeneratorReadyAtMs, "no cooldown started");
+            Assert.AreEqual(0, gen.GeneratorRechargeStartMs, "recharge timer not started");
             Assert.AreEqual(rng, e.RngState, "no RNG consumed");
         }
 
@@ -153,7 +153,7 @@ namespace Game.Domain.Tests
 
             Assert.IsTrue(e.IsBoardFull);
             AssertRefused(e, ledger, ActionError.GeneratorOnCooldown, () => e.TryTapGenerator(GeneratorCell, gen.Id, 1).Error);
-            AssertRefused(e, ledger, ActionError.BoardFull, () => e.TryTapGenerator(GeneratorCell, gen.Id, ToolboxCooldownMs).Error);
+            AssertRefused(e, ledger, ActionError.BoardFull, () => e.TryTapGenerator(GeneratorCell, gen.Id, ToolboxRechargeMs).Error);
         }
 
         // 3 ------------------------------------------------------------------

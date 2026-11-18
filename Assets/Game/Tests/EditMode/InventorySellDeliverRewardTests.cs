@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using NUnit.Framework;
 using static Game.Domain.Tests.TestConfigs;
@@ -73,6 +74,41 @@ namespace Game.Domain.Tests
             Assert.AreEqual(ActionError.InvalidSlot, e.TryMoveFromInventory(99, id, 5).Error);
             Assert.AreEqual(ActionError.InvalidCell, e.TryMoveFromInventory(0, id, 99).Error);
             Assert.AreEqual(before, Canon(e));
+        }
+
+        [Test]
+        public void InventoryItemDroppedOnBoardItem_IsRejected_WithNoChangeAnywhere()
+        {
+            // Approved: no direct merging from inventory; the item returns to its slot.
+            MergeEngine e = EngineWith(out Ledger ledger, At(Flower, 2, 1), At(Flower, 2, 2), At(Cup, 3, 3), At(Toolbox, 1, 4));
+            ItemId stored = e.GetCell(1).Id;
+            e.TryMoveToInventory(1, stored);
+            int[] targets = { 2, 3, 4 }; // identical mergeable item, different item, generator
+            foreach (int cell in targets)
+            {
+                string before = Canon(e);
+                int ledgerBefore = ledger.Entries.Count;
+                int events = 0;
+                Action<Item, Location, Location> onMove = (a, b, c) => events++;
+                Action<Item, CreationReason> onCreate = (a, b) => events++;
+                Action<Item, RemovalReason> onRemove = (a, b) => events++;
+                e.ItemMoved += onMove;
+                e.ItemCreated += onCreate;
+                e.ItemRemoved += onRemove;
+
+                ItemResult r = e.TryMoveFromInventory(0, stored, cell);
+
+                e.ItemMoved -= onMove;
+                e.ItemCreated -= onCreate;
+                e.ItemRemoved -= onRemove;
+                Assert.AreEqual(ActionError.TargetOccupied, r.Error, "target cell " + cell);
+                Assert.AreEqual(stored, e.GetSlot(0).Id, "item stays in its inventory slot");
+                Assert.AreEqual(before, Canon(e), "board and inventory unchanged");
+                Assert.AreEqual(ledgerBefore, ledger.Entries.Count);
+                Assert.AreEqual(0, events);
+            }
+
+            AssertHealthy(e, ledger);
         }
 
         [Test]

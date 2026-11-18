@@ -32,7 +32,7 @@ namespace Game.Domain
 
         public event Action<Item, CreationReason> ItemCreated;
         public event Action<Item, RemovalReason> ItemRemoved;
-        /// <summary>(item, from, to). Raised for moves, both halves of a swap, and inventory transfers.</summary>
+        /// <summary>(item, from, to). Raised for board moves and inventory transfers.</summary>
         public event Action<Item, Location, Location> ItemMoved;
         /// <summary>(consumed source, consumed target, result). Raised after the removal/creation events.</summary>
         public event Action<ItemId, ItemId, Item> ItemsMerged;
@@ -141,7 +141,7 @@ namespace Game.Domain
                 var item = new Item(new ItemId(r.Id), type, config.GetGenerator(type) != null)
                 {
                     GeneratorCharges = r.GeneratorCharges,
-                    GeneratorReadyAtMs = r.GeneratorReadyAtMs,
+                    GeneratorRechargeStartMs = r.GeneratorRechargeStartMs,
                 };
                 result.Attach(item, new Location((LocationArea)r.Area, r.Index));
             }
@@ -278,14 +278,15 @@ namespace Game.Domain
                 GeneratorDefinition gen = config.GetGenerator(type);
                 if (gen == null)
                 {
-                    if (r.GeneratorCharges != 0 || r.GeneratorReadyAtMs != 0)
+                    if (r.GeneratorCharges != 0 || r.GeneratorRechargeStartMs != 0)
                     {
                         errors.Add(label + ": non-generator item has generator state.");
                     }
                 }
-                else if (r.GeneratorCharges < 0 || r.GeneratorCharges > gen.MaxCharges || r.GeneratorReadyAtMs < 0)
+                else if (r.GeneratorCharges < 0 || r.GeneratorCharges > gen.MaxCharges || r.GeneratorRechargeStartMs < 0 ||
+                         (r.GeneratorCharges == gen.MaxCharges && r.GeneratorRechargeStartMs != 0))
                 {
-                    errors.Add(label + ": generator state out of range (charges " + r.GeneratorCharges + ", readyAt " + r.GeneratorReadyAtMs + ").");
+                    errors.Add(label + ": generator state out of range (charges " + r.GeneratorCharges + ", rechargeStart " + r.GeneratorRechargeStartMs + ").");
                 }
             }
 
@@ -378,7 +379,7 @@ namespace Game.Domain
             return count;
         }
 
-        /// <summary>Charges a generator can spend right now, accounting for a finished cooldown.</summary>
+        /// <summary>Charges a generator can spend at <paramref name="nowMs"/>, including charges restored since its timer started.</summary>
         public int GetAvailableCharges(Item generator, long nowMs)
         {
             GeneratorDefinition def = generator == null ? null : _config.GetGenerator(generator.Type);
@@ -387,23 +388,74 @@ namespace Game.Domain
                 return 0;
             }
 
-            if (generator.GeneratorCharges == 0 && nowMs >= generator.GeneratorReadyAtMs)
-            {
-                return def.MaxCharges;
-            }
-
-            return generator.GeneratorCharges;
+            SettleRecharge(generator, def, nowMs, out int charges, out _);
+            return charges;
         }
 
-        /// <summary>Ms until a depleted generator refills; 0 if it has charges available.</summary>
-        public long GetCooldownRemainingMs(Item generator, long nowMs)
+        /// <summary>Ms until the next charge is restored; 0 when the generator is full (timer stopped).</summary>
+        public long GetNextChargeInMs(Item generator, long nowMs)
         {
-            if (GetAvailableCharges(generator, nowMs) > 0)
+            GeneratorDefinition def = generator == null ? null : _config.GetGenerator(generator.Type);
+            if (def == null)
             {
                 return 0;
             }
 
-            return Math.Max(0, generator.GeneratorReadyAtMs - nowMs);
+            SettleRecharge(generator, def, nowMs, out int charges, out long start);
+            return charges >= def.MaxCharges ? 0 : Math.Max(0, start + def.RechargeIntervalMs - nowMs);
+        }
+
+        /// <summary>Ms until the generator is completely full; 0 when already full.</summary>
+        public long GetFullRechargeInMs(Item generator, long nowMs)
+        {
+            GeneratorDefinition def = generator == null ? null : _config.GetGenerator(generator.Type);
+            if (def == null)
+            {
+                return 0;
+            }
+
+            SettleRecharge(generator, def, nowMs, out int charges, out _);
+            if (charges >= def.MaxCharges)
+            {
+                return 0;
+            }
+
+            return GetNextChargeInMs(generator, nowMs) + (def.MaxCharges - charges - 1) * def.RechargeIntervalMs;
+        }
+
+        /// <summary>
+        /// Pure calculation of a generator's charges at <paramref name="nowMs"/>. Charges restored so far are
+        /// computed from the stored (charges, start) pair, never accumulated, so repeated queries or save/load
+        /// cycles cannot restore a charge twice. The start advances by whole intervals, keeping partial progress.
+        /// A clock earlier than the start restores nothing.
+        /// </summary>
+        private static void SettleRecharge(Item generator, GeneratorDefinition def, long nowMs, out int charges, out long start)
+        {
+            int stored = generator.GeneratorCharges;
+            start = generator.GeneratorRechargeStartMs;
+            if (stored >= def.MaxCharges)
+            {
+                charges = def.MaxCharges;
+                start = 0;
+                return;
+            }
+
+            if (nowMs <= start)
+            {
+                charges = stored;
+                return;
+            }
+
+            long restored = (nowMs - start) / def.RechargeIntervalMs;
+            if (restored >= def.MaxCharges - stored)
+            {
+                charges = def.MaxCharges;
+                start = 0;
+                return;
+            }
+
+            charges = stored + (int)restored;
+            start += restored * def.RechargeIntervalMs;
         }
 
         /// <summary>Finds a pair of mergeable items on the board, lowest cell indices first. For hints.</summary>
@@ -457,7 +509,9 @@ namespace Game.Domain
 
         /// <summary>
         /// Drop the item at <paramref name="fromCell"/> onto <paramref name="toCell"/>: moves into an empty
-        /// cell, merges with an identical mergeable item, otherwise swaps. <paramref name="expected"/> must be
+        /// cell or merges with an identical mergeable item. Dropping onto any other item is refused with
+        /// <see cref="ActionError.IncompatibleTarget"/> and changes nothing, so the presentation returns the
+        /// item to its origin (approved decision: bounce back, no swap). <paramref name="expected"/> must be
         /// the item the player picked up; if it no longer sits there the drop is refused as stale.
         /// </summary>
         public DropResult TryDrop(int fromCell, ItemId expected, int toCell)
@@ -516,13 +570,7 @@ namespace Game.Domain
                 return new DropResult(ActionError.None, DropOutcome.Merged, result.Id);
             }
 
-            _cells[fromCell] = target;
-            _cells[toCell] = source;
-            source.Location = to;
-            target.Location = from;
-            ItemMoved?.Invoke(source, from, to);
-            ItemMoved?.Invoke(target, to, from);
-            return new DropResult(ActionError.None, DropOutcome.Swapped, source.Id);
+            return DropResult.Fail(ActionError.IncompatibleTarget);
         }
 
         /// <summary>
@@ -554,10 +602,10 @@ namespace Game.Domain
                 return SpawnResult.Fail(ActionError.NotAGenerator);
             }
 
-            int charges = GetAvailableCharges(generator, nowMs);
+            SettleRecharge(generator, def, nowMs, out int charges, out long rechargeStart);
             if (charges <= 0)
             {
-                return SpawnResult.Fail(ActionError.GeneratorOnCooldown, GetCooldownRemainingMs(generator, nowMs));
+                return SpawnResult.Fail(ActionError.GeneratorOnCooldown, GetNextChargeInMs(generator, nowMs));
             }
 
             int targetCell = FindNearestEmptyCell(cell);
@@ -569,8 +617,9 @@ namespace Game.Domain
             ItemType rolled = def.Roll(_rng);
             Item spawned = AllocateItem(rolled);
             Attach(spawned, Location.Cell(targetCell));
+            // Spending from full starts the timer now; spending below full keeps the running timer.
+            generator.GeneratorRechargeStartMs = charges >= def.MaxCharges ? nowMs : rechargeStart;
             generator.GeneratorCharges = charges - 1;
-            generator.GeneratorReadyAtMs = generator.GeneratorCharges == 0 ? nowMs + def.CooldownMs : 0;
             _ledger?.RecordCreated(CreationReason.Spawn, spawned.Id, spawned.Type);
 
             ItemCreated?.Invoke(spawned, CreationReason.Spawn);
@@ -879,7 +928,7 @@ namespace Game.Domain
             Area = (int)item.Location.Area,
             Index = item.Location.Index,
             GeneratorCharges = item.GeneratorCharges,
-            GeneratorReadyAtMs = item.GeneratorReadyAtMs,
+            GeneratorRechargeStartMs = item.GeneratorRechargeStartMs,
         };
 
         // ------------------------------------------------------------------ internals
@@ -891,7 +940,7 @@ namespace Game.Domain
             if (def != null)
             {
                 item.GeneratorCharges = def.MaxCharges;
-                item.GeneratorReadyAtMs = 0;
+                item.GeneratorRechargeStartMs = 0;
             }
 
             return item;

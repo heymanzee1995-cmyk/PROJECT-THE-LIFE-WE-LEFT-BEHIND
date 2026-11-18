@@ -171,9 +171,9 @@ namespace Game.Domain
                 errors.Add(label + ": max charges must be >= 1 (was " + gen.MaxCharges + ").");
             }
 
-            if (gen.CooldownMs < 0)
+            if (gen.RechargeIntervalMs <= 0)
             {
-                errors.Add(label + ": cooldown must be >= 0 ms (was " + gen.CooldownMs + ").");
+                errors.Add(label + ": recharge interval must be > 0 ms (was " + gen.RechargeIntervalMs + ").");
             }
 
             if (gen.Outputs.Count == 0)

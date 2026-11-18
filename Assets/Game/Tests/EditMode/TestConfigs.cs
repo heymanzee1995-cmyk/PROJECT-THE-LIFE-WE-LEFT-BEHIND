@@ -48,7 +48,7 @@ namespace Game.Domain.Tests
         public const int Rows = 8;
         public const int GeneratorCell = 17;     // column 2, row 3 (centre)
         public const int CrateCell = 0;
-        public const long ToolboxCooldownMs = 60000;
+        public const long ToolboxRechargeMs = 60000; // per charge
         public const int ToolboxCharges = 6;
 
         public static readonly int[] LockedCells = { 35, 36, 37, 38, 39 };
@@ -61,7 +61,7 @@ namespace Game.Domain.Tests
             shape = shape ?? BoardShape.Default5x8;
             var toolbox = new ChainDefinition(Toolbox, 3, new[] { 5, 10, 20 }, new[]
             {
-                new GeneratorDefinition(ToolboxCharges, ToolboxCooldownMs, new[]
+                new GeneratorDefinition(ToolboxCharges, ToolboxRechargeMs, new[]
                 {
                     new WeightedOutput(T(Flower, 1), 60),
                     new WeightedOutput(T(Cup, 1), 40),
@@ -118,7 +118,7 @@ namespace Game.Domain.Tests
             {
                 ItemRecord r = s.Items[i];
                 sb.Append(r.Id).Append(':').Append(r.ChainId).Append(':').Append(r.Tier).Append('@').Append(r.Area).Append('/')
-                  .Append(r.Index).Append('g').Append(r.GeneratorCharges).Append('/').Append(r.GeneratorReadyAtMs).Append(';');
+                  .Append(r.Index).Append('g').Append(r.GeneratorCharges).Append('/').Append(r.GeneratorRechargeStartMs).Append(';');
             }
 
             sb.Append(" rewards=");

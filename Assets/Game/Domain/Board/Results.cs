@@ -15,6 +15,8 @@ namespace Game.Domain
         StaleItem,
         SameLocation,
         TargetOccupied,
+        /// <summary>Dropped onto an item it cannot merge with. Nothing changes; the item returns to its origin.</summary>
+        IncompatibleTarget,
         NotAGenerator,
         GeneratorNotOnBoard,
         GeneratorOnCooldown,
@@ -33,7 +35,6 @@ namespace Game.Domain
     {
         None = 0,
         Moved,
-        Swapped,
         Merged,
     }
 
@@ -60,7 +61,7 @@ namespace Game.Domain
         public readonly ActionError Error;
         public readonly ItemId Item;
         public readonly int Cell;
-        /// <summary>When refused with <see cref="ActionError.GeneratorOnCooldown"/>: ms until charges refill.</summary>
+        /// <summary>When refused with <see cref="ActionError.GeneratorOnCooldown"/> (no charges): ms until the next charge.</summary>
         public readonly long CooldownRemainingMs;
 
         public SpawnResult(ActionError error, ItemId item, int cell, long cooldownRemainingMs)

@@ -30,18 +30,18 @@ namespace Game.Domain
     }
 
     /// <summary>
-    /// Behaviour of a generator tier. A generator holds <see cref="MaxCharges"/> charges; each tap
-    /// spends one and spawns one item rolled from <see cref="Outputs"/>. When charges reach zero the
-    /// generator cools down for <see cref="CooldownMs"/> and then refills to full.
+    /// Behaviour of a generator tier. A generator holds up to <see cref="MaxCharges"/> charges; each tap
+    /// spends one and spawns one item rolled from <see cref="Outputs"/>. While below full it restores one
+    /// charge every <see cref="RechargeIntervalMs"/> (approved incremental recharge); the timer stops at full.
     /// </summary>
     public sealed class GeneratorDefinition
     {
         private readonly WeightedOutput[] _outputs;
 
-        public GeneratorDefinition(int maxCharges, long cooldownMs, IReadOnlyList<WeightedOutput> outputs)
+        public GeneratorDefinition(int maxCharges, long rechargeIntervalMs, IReadOnlyList<WeightedOutput> outputs)
         {
             MaxCharges = maxCharges;
-            CooldownMs = cooldownMs;
+            RechargeIntervalMs = rechargeIntervalMs;
             _outputs = outputs == null ? Array.Empty<WeightedOutput>() : CopyOf(outputs);
             long total = 0;
             for (int i = 0; i < _outputs.Length; i++)
@@ -53,7 +53,8 @@ namespace Game.Domain
         }
 
         public int MaxCharges { get; }
-        public long CooldownMs { get; }
+        /// <summary>Time to restore one charge. Must be &gt; 0.</summary>
+        public long RechargeIntervalMs { get; }
         public IReadOnlyList<WeightedOutput> Outputs => _outputs;
         public long TotalWeight { get; }
 

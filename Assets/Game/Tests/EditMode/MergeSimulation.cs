@@ -17,6 +17,7 @@ namespace Game.Domain.Tests
         public readonly Dictionary<string, int> Succeeded = new Dictionary<string, int>();
         public readonly Dictionary<string, int> Refused = new Dictionary<string, int>();
         public int Merges;
+        public int BounceBacks;
         public int BoardFullRefusals;
         public int Reloads;
         public int InterruptedDrags;
@@ -28,7 +29,7 @@ namespace Game.Domain.Tests
         public override string ToString()
         {
             var sb = new StringBuilder();
-            sb.Append("merges=").Append(Merges).Append(" boardFull=").Append(BoardFullRefusals).Append(" reloads=").Append(Reloads)
+            sb.Append("merges=").Append(Merges).Append(" bounceBacks=").Append(BounceBacks).Append(" boardFull=").Append(BoardFullRefusals).Append(" reloads=").Append(Reloads)
               .Append(" interruptedDrags=").Append(InterruptedDrags).Append(" maxItems=").Append(MaxItemsSeen)
               .Append(" nextId=").Append(FinalNextId).Append('\n');
             foreach (KeyValuePair<string, int> pair in Succeeded)
@@ -245,10 +246,22 @@ namespace Game.Domain.Tests
             Tally("drop", r.Success);
             if (!r.Success)
             {
-                Expect(r.Error == ActionError.InvalidCell || r.Error == ActionError.SameLocation || r.Error == ActionError.CellLocked,
-                    "unexpected drop refusal " + r.Error);
+                Expect(r.Error == ActionError.InvalidCell || r.Error == ActionError.SameLocation || r.Error == ActionError.CellLocked ||
+                       r.Error == ActionError.IncompatibleTarget, "unexpected drop refusal " + r.Error);
+                if (r.Error == ActionError.IncompatibleTarget)
+                {
+                    _stats.BounceBacks++;
+                    Expect(target != null && !_config.CanMerge(sourceType, target.Type), "IncompatibleTarget for a valid merge or empty cell");
+                }
+                else if (_engine.IsValidCell(to) && !_engine.IsLocked(to) && to != from)
+                {
+                    throw Failure("valid drop refused as " + r.Error);
+                }
+
                 return false;
             }
+
+            Expect(target == null || _config.CanMerge(sourceType, target.Type), "drop onto an incompatible item succeeded (must bounce back)");
 
             if (r.Outcome == DropOutcome.Merged)
             {
@@ -262,10 +275,10 @@ namespace Game.Domain.Tests
             }
             else
             {
-                Expect(_engine.ItemCount == before, "move/swap changed item count");
+                Expect(r.Outcome == DropOutcome.Moved, "unexpected drop outcome " + r.Outcome);
+                Expect(_engine.ItemCount == before, "move changed item count");
                 Expect(_engine.GetCell(to).Id == sourceId, "moved item not at target");
-                Expect(r.Outcome == DropOutcome.Moved ? _engine.GetCell(from) == null : _engine.GetCell(from).Id == targetId,
-                    "source cell wrong after " + r.Outcome);
+                Expect(_engine.GetCell(from) == null, "source cell not cleared after move");
             }
 
             return true;
@@ -446,7 +459,8 @@ namespace Game.Domain.Tests
 
         private bool AdvanceTime(out string action)
         {
-            long dt = _driver.NextInt(3) == 0 ? _driver.NextInt(150000) : _driver.NextInt(5000);
+            // Long waits span several recharge intervals (incremental recharge restores one charge each).
+            long dt = _driver.NextInt(3) == 0 ? _driver.NextInt(400000) : _driver.NextInt(5000);
             _now += dt;
             action = "time +" + dt + "ms -> " + _now;
             Tally("time", true);
@@ -619,7 +633,7 @@ namespace Game.Domain.Tests
                 copy.Items[i] = new ItemRecord
                 {
                     Id = r.Id, ChainId = r.ChainId, Tier = r.Tier, Area = r.Area, Index = r.Index,
-                    GeneratorCharges = r.GeneratorCharges, GeneratorReadyAtMs = r.GeneratorReadyAtMs,
+                    GeneratorCharges = r.GeneratorCharges, GeneratorRechargeStartMs = r.GeneratorRechargeStartMs,
                 };
             }
 

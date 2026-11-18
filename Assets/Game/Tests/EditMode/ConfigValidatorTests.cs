@@ -74,7 +74,8 @@ namespace Game.Domain.Tests
         {
             var target = Plain("item");
             AssertError(Errors(Board(), target, Gen(new GeneratorDefinition(0, 10, new[] { new WeightedOutput(T("item", 1), 1) }))), "max charges");
-            AssertError(Errors(Board(), target, Gen(new GeneratorDefinition(1, -5, new[] { new WeightedOutput(T("item", 1), 1) }))), "cooldown");
+            AssertError(Errors(Board(), target, Gen(new GeneratorDefinition(1, -5, new[] { new WeightedOutput(T("item", 1), 1) }))), "recharge interval");
+            AssertError(Errors(Board(), target, Gen(new GeneratorDefinition(1, 0, new[] { new WeightedOutput(T("item", 1), 1) }))), "recharge interval");
             AssertError(Errors(Board(), target, Gen(new GeneratorDefinition(1, 10, new WeightedOutput[0]))), "output table is empty");
             AssertError(Errors(Board(), target, Gen(new GeneratorDefinition(1, 10, new[] { new WeightedOutput(T("item", 1), 0) }))), "positive weight");
             AssertError(Errors(Board(), target, Gen(new GeneratorDefinition(1, 10, new[] { new WeightedOutput(T("nope", 1), 1) }))), "not a valid chain/tier");

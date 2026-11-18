@@ -35,7 +35,7 @@ namespace Game.Domain
         public int Area;
         public int Index;
         public int GeneratorCharges;
-        public long GeneratorReadyAtMs;
+        public long GeneratorRechargeStartMs;
     }
 
     [Serializable]
