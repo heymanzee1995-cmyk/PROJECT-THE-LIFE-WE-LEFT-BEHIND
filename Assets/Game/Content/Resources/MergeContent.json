@@ -1,0 +1,95 @@
+{
+    "version": 1,
+    "board": {
+        "columns": 5,
+        "rows": 8,
+        "inventoryCapacity": 4,
+        "maxInventoryCapacity": 8,
+        "lockedCells": [35, 36, 37, 38, 39]
+    },
+    "chains": [
+        {
+            "id": "toolbox",
+            "color": "#6FA8DC",
+            "maxTier": 3,
+            "strictlyDoubling": false,
+            "sellValues": [0, 0, 0],
+            "tierNames": ["Old Toolbox", "Sturdy Toolbox", "Carpenter's Chest"],
+            "generators": [
+                {
+                    "tier": 1, "maxCharges": 10, "rechargeIntervalMs": 30000,
+                    "outputs": [
+                        { "chainId": "garden", "tier": 1, "weight": 60 },
+                        { "chainId": "tea", "tier": 1, "weight": 40 }
+                    ]
+                },
+                {
+                    "tier": 2, "maxCharges": 14, "rechargeIntervalMs": 25000,
+                    "outputs": [
+                        { "chainId": "garden", "tier": 1, "weight": 45 },
+                        { "chainId": "garden", "tier": 2, "weight": 15 },
+                        { "chainId": "tea", "tier": 1, "weight": 30 },
+                        { "chainId": "tea", "tier": 2, "weight": 10 }
+                    ]
+                },
+                {
+                    "tier": 3, "maxCharges": 18, "rechargeIntervalMs": 20000,
+                    "outputs": [
+                        { "chainId": "garden", "tier": 2, "weight": 40 },
+                        { "chainId": "garden", "tier": 3, "weight": 10 },
+                        { "chainId": "tea", "tier": 2, "weight": 40 },
+                        { "chainId": "tea", "tier": 3, "weight": 10 }
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "trunk",
+            "color": "#B08968",
+            "maxTier": 1,
+            "strictlyDoubling": false,
+            "sellValues": [0],
+            "tierNames": ["Attic Trunk"],
+            "generators": [
+                {
+                    "tier": 1, "maxCharges": 5, "rechargeIntervalMs": 60000,
+                    "outputs": [
+                        { "chainId": "memento", "tier": 1, "weight": 85 },
+                        { "chainId": "memento", "tier": 2, "weight": 15 }
+                    ]
+                }
+            ]
+        },
+        {
+            "id": "garden",
+            "color": "#8DBF6A",
+            "maxTier": 8,
+            "strictlyDoubling": true,
+            "sellValues": [1, 2, 4, 8, 16, 32, 64, 128],
+            "tierNames": ["Seed Packet", "Sprout", "Seedling", "Potted Herb", "Flowering Pot", "Window Box", "Rose Bush", "Garden Arch"]
+        },
+        {
+            "id": "tea",
+            "color": "#E9A97A",
+            "maxTier": 7,
+            "strictlyDoubling": false,
+            "sellValues": [1, 2, 4, 7, 12, 20, 35],
+            "tierNames": ["Sugar Cube", "Teaspoon", "Teacup", "Teapot", "Tea Tray", "Cake Stand", "Afternoon Tea Set"]
+        },
+        {
+            "id": "memento",
+            "color": "#C9A0DC",
+            "maxTier": 6,
+            "strictlyDoubling": false,
+            "sellValues": [2, 4, 8, 15, 25, 50],
+            "tierNames": ["Old Button", "Pressed Flower", "Postcard", "Sealed Letter", "Bundle of Letters", "Memory Box"]
+        }
+    ],
+    "startingLayout": [
+        { "chainId": "toolbox", "tier": 1, "cell": 17 },
+        { "chainId": "trunk", "tier": 1, "cell": 2 },
+        { "chainId": "garden", "tier": 1, "cell": 15 },
+        { "chainId": "garden", "tier": 1, "cell": 16 },
+        { "chainId": "tea", "tier": 2, "cell": 21 }
+    ]
+}
