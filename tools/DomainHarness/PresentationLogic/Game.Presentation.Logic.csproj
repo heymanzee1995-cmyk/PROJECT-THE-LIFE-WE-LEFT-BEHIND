@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Compiles only Assets/Game/Presentation/Logic: the pure C# part of Game.Presentation (no UnityEngine).
+       The Unity MonoBehaviours in the same assembly are compiled by Unity only. -->
+  <PropertyGroup>
+    <TargetFramework>netstandard2.1</TargetFramework>
+    <LangVersion>9.0</LangVersion>
+    <Nullable>disable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <AssemblyName>Game.Presentation</AssemblyName>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="../../../Assets/Game/Presentation/Logic/**/*.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="../Domain/Game.Domain.csproj" />
+    <ProjectReference Include="../Data/Game.Data.csproj" />
+  </ItemGroup>
+</Project>
