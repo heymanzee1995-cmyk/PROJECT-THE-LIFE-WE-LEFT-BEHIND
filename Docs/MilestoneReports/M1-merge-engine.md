@@ -1,5 +1,8 @@
 # M1: Pure C# merge engine (milestone report)
 
+> **Update:** see `M1-review.md` for the follow-up review: 78 tests, edge cases, Unity compatibility
+> and setup. The setup steps in section 6 below are superseded by `Docs/UnitySetup.md`.
+
 Branch: `feature/phase-2-merge-engine` (cut from `main`). Phase name follows the master
 instructions; the content is spec milestone M1. The engine was built before the UI prototype, as agreed.
 

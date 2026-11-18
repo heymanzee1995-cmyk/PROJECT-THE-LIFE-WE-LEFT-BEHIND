@@ -9,13 +9,17 @@
     <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
     <IsPackable>false</IsPackable>
     <IsTestProject>true</IsTestProject>
+    <!-- Tests run on NUnit 3.14. Build with -p:NUnitVersion=3.5.0 to check that the tests only use APIs
+         available in NUnit 3.5, which Unity's com.unity.ext.nunit is based on. (3.5 compiles on net8 but
+         cannot execute there, so that build is a compile-only API check.) -->
+    <NUnitVersion Condition="'$(NUnitVersion)' == ''">3.14.0</NUnitVersion>
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="../../../Assets/Game/Tests/EditMode/**/*.cs" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.11.1" />
-    <PackageReference Include="NUnit" Version="3.14.0" />
+    <PackageReference Include="NUnit" Version="$(NUnitVersion)" NoWarn="NU1701" />
     <PackageReference Include="NUnit3TestAdapter" Version="4.6.0" />
   </ItemGroup>
   <ItemGroup>

@@ -10,7 +10,7 @@ layouts, names or storylines.
 
 | Phase | Branch | Status |
 |---|---|---|
-| Merge engine (pure C#) | `feature/phase-2-merge-engine` | TESTED (automated), awaiting review |
+| Merge engine (pure C#) | `feature/phase-2-merge-engine` | TESTED (automated) outside Unity; provisionally accepted; Unity EditMode run pending |
 | UI prototype / board view | `feature/phase-1-ui-prototype` | NOT STARTED |
 
 The engine was built before the UI prototype (agreed order), so the UI shows real rules and not
@@ -27,16 +27,9 @@ Docs/                        Architecture, milestone reports
 
 ## Opening in Unity (first time)
 
-The repo has no Unity project files yet. To create them:
-
-1. In Unity Hub create a new **Universal 2D** project with Unity 6 in an empty folder.
-2. Close Unity. Copy that project's `Packages/` and `ProjectSettings/` folders into this repo root.
-3. Open this repo folder in Unity Hub (*Add > Add project from disk*).
-4. Run **Window > General > Test Runner > EditMode > Run All**.
-5. Commit the generated `.meta` files, `Packages/` and `ProjectSettings/`.
-
-Recommended for fast iteration on a modest machine: *Project Settings > Editor > Enter Play Mode
-Options*, set to "Do not reload Domain or Scene".
+The repo has no Unity-generated files yet. Follow **`Docs/UnitySetup.md`** (Unity 6.3 LTS,
+Universal 2D template). Note that the template's `Assets/Settings` URP assets must be copied along
+with `Packages/` and `ProjectSettings/`.
 
 ## Running the domain tests without Unity
 
@@ -44,6 +37,12 @@ Requires the .NET 8 SDK.
 
 ```bash
 dotnet test tools/DomainHarness/Tests/Game.Domain.Tests.csproj
+```
+
+API check against NUnit 3.5 (the version Unity's bundled NUnit is based on; compile only):
+
+```bash
+dotnet build tools/DomainHarness/Tests/Game.Domain.Tests.csproj -p:NUnitVersion=3.5.0
 ```
 
 The harness compiles `Game.Domain` with C# 9 against .NET Standard 2.1, which matches Unity 6's

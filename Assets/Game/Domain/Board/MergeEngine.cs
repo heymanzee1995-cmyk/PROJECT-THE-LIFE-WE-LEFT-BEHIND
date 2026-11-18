@@ -324,13 +324,27 @@ namespace Game.Domain
 
         public bool TryGetItem(ItemId id, out Item item) => _items.TryGetValue(id.Value, out item);
 
-        /// <summary>Copies every live item into <paramref name="buffer"/> (cleared first). No other allocation.</summary>
+        /// <summary>
+        /// Copies every live item into <paramref name="buffer"/> (cleared first): board cells in index order,
+        /// then inventory slots. The order is deterministic on every runtime (dictionary order is not).
+        /// </summary>
         public void CopyItems(List<Item> buffer)
         {
             buffer.Clear();
-            foreach (KeyValuePair<long, Item> pair in _items)
+            for (int i = 0; i < _cells.Length; i++)
             {
-                buffer.Add(pair.Value);
+                if (_cells[i] != null)
+                {
+                    buffer.Add(_cells[i]);
+                }
+            }
+
+            for (int i = 0; i < _inventory.Length; i++)
+            {
+                if (_inventory[i] != null)
+                {
+                    buffer.Add(_inventory[i]);
+                }
             }
         }
 

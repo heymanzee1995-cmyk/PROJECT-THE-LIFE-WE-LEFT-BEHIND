@@ -34,3 +34,7 @@ crashlytics-build.properties
 /tools/DomainHarness/**/bin/
 /tools/DomainHarness/**/obj/
 /tools/DomainHarness/TestResults/
+
+# Command-line Unity test output
+/TestResults-*.xml
+/unity-*.log

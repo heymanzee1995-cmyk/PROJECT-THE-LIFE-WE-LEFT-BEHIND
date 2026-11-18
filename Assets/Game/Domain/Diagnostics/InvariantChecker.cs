@@ -57,6 +57,8 @@ namespace Game.Domain
                 CheckPlacedItem(engine, item, Location.Slot(s), seen, violations);
             }
 
+            // Every placed item is unique and tracked (checked above), so equal counts prove the tracked
+            // set is exactly the placed set: no item is tracked without being in a cell or slot.
             if (placed != engine.ItemCount)
             {
                 violations.Add("Engine tracks " + engine.ItemCount + " items but " + placed + " are placed (orphaned items).");
@@ -64,13 +66,6 @@ namespace Game.Domain
 
             var all = new List<Item>(engine.ItemCount);
             engine.CopyItems(all);
-            for (int i = 0; i < all.Count; i++)
-            {
-                if (!seen.Contains(all[i].Id.Value))
-                {
-                    violations.Add("Item " + all[i] + " is tracked but not in any cell or slot.");
-                }
-            }
 
             if (ledger != null)
             {
