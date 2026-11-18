@@ -1,10 +1,17 @@
 # Design decisions under review
 
 Three gameplay rules in the M1 engine were my assumptions, not specified rules. None is a code defect.
-All three stay as implemented until you decide otherwise; changing any of them is a deliberate
-gameplay change with its own tests, never a silent one.
 
-Status: **all three KEPT, awaiting your decision.**
+**Decisions approved 2026-11-18. The M1 code is unchanged until each one is implemented:**
+
+| Rule in M1 code | Approved replacement | Implemented in | Status |
+|---|---|---|---|
+| Non-matching drop swaps | Return the item with a bounce-back and "invalid merge" feedback; no state change | M2 | NOT STARTED |
+| Refill all charges at once when empty | Incremental: one charge per configurable interval, timer stops at full | M2 | NOT STARTED |
+| Delivery from board only | Delivery from board and inventory, atomic, ledger-recorded | M3 | NOT STARTED |
+
+The implementation plan, the affected tests and the open points are in **`ApprovedChanges.md`**. The
+analysis below is kept as the record of why.
 
 ---
 

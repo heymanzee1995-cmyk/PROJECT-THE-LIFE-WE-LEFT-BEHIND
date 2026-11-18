@@ -13,6 +13,9 @@ layouts, names or storylines.
 | Merge engine (pure C#) | `feature/phase-2-merge-engine` | TESTED (automated) outside Unity; provisionally accepted; Unity EditMode run pending |
 | UI prototype / board view | `feature/phase-1-ui-prototype` | NOT STARTED |
 
+Approved gameplay changes (bounce-back drops, incremental recharge, inventory delivery) are planned
+in `Docs/ApprovedChanges.md` and not yet implemented.
+
 The engine was built before the UI prototype (agreed order), so the UI shows real rules and not
 throwaway logic. See `Docs/MilestoneReports/` for each milestone's report.
 

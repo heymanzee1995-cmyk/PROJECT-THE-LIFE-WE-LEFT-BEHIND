@@ -127,8 +127,8 @@ See **`Docs/UnitySetup.md`**. In short:
 | Unity project files committed | **Pending:** `UnitySetup.md` steps 1–8 |
 | Domain tests pass in Unity's EditMode runner | **Pending:** step 6 |
 | Engine API covers M2 needs (drop, tap, inventory, sell, board-full, hints, events) | Yes |
-| Decision: swap versus bounce on a non-matching drop | **Needed before M2**, because it shapes M2's drop animation and feedback |
-| Decisions: generator recharge model, inventory deliveries | Needed before M3, not M2 |
+| Decision: swap versus bounce on a non-matching drop | **Approved:** bounce back (see `Docs/ApprovedChanges.md`) |
+| Decisions: generator recharge model, inventory deliveries | **Approved:** incremental recharge (M2), board and inventory delivery (M3) |
 
 Once you push the Unity project and report the EditMode result, I'll pull it, check the commit
 (meta files, no Library, the URP assets present), and then propose the M2 plan for your approval
